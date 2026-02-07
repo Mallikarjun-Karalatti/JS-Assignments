@@ -48,8 +48,9 @@ function largestValueKey(obj){
 
 function flattenObjArrays(obj){
     let result = [];
-    Object.values(obj).forEach(arr =>{
-        result.push(...arr);
+    Object.values(obj).forEach(arr => {
+        if(Array.isArray(arr)) result.push(...flattenObjArrays(arr));
+        else result.push(arr);
     })
     return result;
 }
@@ -84,7 +85,7 @@ function highestAvgMarks(students){
             result.student = key;
              result.avgMarks = curStudentAvgMarks;
         }
-    })
+    }) 
     return result.student;
 }
 
