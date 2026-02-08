@@ -4,7 +4,7 @@ import type { AuthUser } from "../lib/auth";
 
 export type AuthVariables = { user: AuthUser };
 
-/** Attach current user to context when valid Bearer token is present. Sets context.var.user or returns 401. */
+/** Require valid Bearer token. Sets context.var.user or returns 401. */
 export const requireAuth = createMiddleware<{ Variables: AuthVariables }>(async (c, next) => {
   const token = getBearerToken(c.req.raw.headers.get("Authorization") ?? undefined);
   if (!token) {
@@ -28,5 +28,23 @@ export const optionalAuth = createMiddleware<{ Variables: { user: AuthUser | nul
   }
   const user = await getAuthUserFromToken(token);
   c.set("user", user ?? null);
+  await next();
+});
+
+/** Require authenticated user with INSTRUCTOR role. Must use after requireAuth. */
+export const requireInstructor = createMiddleware<{ Variables: AuthVariables }>(async (c, next) => {
+  const user = c.get("user");
+  if (!user || user.role !== "INSTRUCTOR") {
+    return c.json({ error: "Forbidden: Instructor access required" }, 403);
+  }
+  await next();
+});
+
+/** Require authenticated user with STUDENT role. Must use after requireAuth. */
+export const requireStudent = createMiddleware<{ Variables: AuthVariables }>(async (c, next) => {
+  const user = c.get("user");
+  if (!user || user.role !== "STUDENT") {
+    return c.json({ error: "Forbidden: Student access required" }, 403);
+  }
   await next();
 });
